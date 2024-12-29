@@ -1,3 +1,5 @@
+# to do 1.Add db for users data storage 2. Add transfers between accs 3(Maybe) Add loans
+import sqlite3 as db
 
 
 class BankAccount:
@@ -9,6 +11,7 @@ class BankAccount:
        if amount > 0:
            self.balance += amount
            print(f"Deposited: {amount}$ to your account {self.owner} successfully.")
+           self.update_balance_in_db()
            return amount
 
     def withdraw(self, amount: float):
@@ -19,10 +22,24 @@ class BankAccount:
         else:
             self.balance -= amount
             print(f"Successfully withdrawn {amount}$ from your account {self.owner}")
+            self.update_balance_in_db()
             return amount
 
-User1 = BankAccount("Dima", 3400)
-User1.deposit(2600)
-User1.withdraw(-200)
+    def update_balance_in_db(self):
+        with db.connect("bank.db") as con:
+            cur = con.cursor()
+            cur.execute("UPDATE users SET balance = ? WHERE owner = ?", (self.balance, self.owner))
+            con.commit()
 
-print(f"Your account balance: {User1.balance}$")
+def initialize_db():
+     with db.connect("bank.db") as con:
+        cur = con.cursor()
+        cur.execute("""CREATE TABLE IF NOT EXISTS users (
+        rowid INTEGER PRIMARY KEY AUTOINCREMENT,
+        owner TEXT NOT NULL,
+        balance REAL DEFAULT 0
+        )""")
+        con.commit()
+
+def main():
+    initialize_db()
